@@ -1,0 +1,43 @@
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Python virtual environments
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+
+# Node dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Django uploaded files and archives
+nepal_virtual_care_backend/media/
+nepal_virtual_care_backend/media_archive/
+nepal_virtual_care_backend/staticfiles/
+
+# One-time database cleanup utility
+nepal_virtual_care_backend/cleanup_test_data.py
+
+# Local database and backup files
+*.sqlite3
+*.backup
+*.dump
+*.bak
+
+# Logs
+*.log
+
+# IDE and operating system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
