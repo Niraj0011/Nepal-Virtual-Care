@@ -12,6 +12,7 @@ import { useApp } from '../context/AppContext';
 import {
   getAppointments,
   updateAppointmentStatus,
+  getDoctorProfilePhoto,
   getDoctorAvailability,
   saveDoctorAvailability,
   getDoctorScheduleChangeRequests,
@@ -364,6 +365,42 @@ export default function DoctorDashboard() {
   const [followUpSlotsLoading, setFollowUpSlotsLoading] = useState(false);
   const [followUpSubmitting, setFollowUpSubmitting] = useState(false);
   const [followUpError, setFollowUpError] = useState('');
+    // Doctor sidebar profile photo
+  const [doctorProfilePhoto, setDoctorProfilePhoto] = useState(null);
+
+  useEffect(() => {
+    let isActive = true;
+
+    if (!user) {
+      setDoctorProfilePhoto(null);
+
+      return () => {
+        isActive = false;
+      };
+    }
+
+    const loadDoctorPhoto = async () => {
+      try {
+        const data = await getDoctorProfilePhoto();
+
+        if (isActive) {
+          setDoctorProfilePhoto(data?.profile_photo || null);
+        }
+      } catch (error) {
+        console.error('Unable to load doctor profile photo:', error);
+
+        if (isActive) {
+          setDoctorProfilePhoto(null);
+        }
+      }
+    };
+
+    loadDoctorPhoto();
+
+    return () => {
+      isActive = false;
+    };
+  }, [user?.id, user?.username]);
 
   const fullName =
     [user?.first_name, user?.last_name].filter(Boolean).join(' ') ||
@@ -1376,15 +1413,21 @@ export default function DoctorDashboard() {
 
         <div className="doctor-sidebar-profile">
            <div className="dashboard-sidebar-profile-avatar">
-            {user?.profile_photo || user?.patient_profile?.profile_photo || user?.profile?.profile_photo ? (
-              <img
-                src={user?.profile_photo || user?.patient_profile?.profile_photo || user?.profile?.profile_photo}
-                alt="Account profile"
-              />
-            ) : (
-              <UserRound size={21} />
-            )}
-          </div>
+  {doctorProfilePhoto ||
+  user?.profile_photo ||
+  user?.profile?.profile_photo ? (
+    <img
+      src={
+        doctorProfilePhoto ||
+        user?.profile_photo ||
+        user?.profile?.profile_photo
+      }
+      alt="Account profile"
+    />
+  ) : (
+    <UserRound size={21} />
+  )}
+</div>
           <div className="doctor-profile-info">
             <strong>Dr. {fullName.replace(/^Dr\.\s*/i, '')}</strong>
             <span>Medical Professional</span>
@@ -1478,13 +1521,13 @@ export default function DoctorDashboard() {
           </div>
 
           <Link
-            to="/"
-            className="doctor-nav-link doctor-home-link"
-            onClick={closeSidebar}
-          >
-            <Home size={19} />
-            <span>Back to Home</span>
-          </Link>
+  to="/"
+  className="doctor-nav-link doctor-home-link"
+  onClick={closeSidebar}
+>
+  <Home size={19} />
+  <span>Back to website</span>
+</Link>
         </div>
       </aside>
 
