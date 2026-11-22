@@ -25,6 +25,7 @@ import {
   Check,
   Clock3,
   CalendarDays,
+  ShieldCheck,
 } from 'lucide-react';
 
 import { useApp } from '../context/AppContext';
@@ -244,9 +245,16 @@ export default function Layout({ children }) {
     { label: 'Community', path: '/community', icon: Users },
   ];
 
+  const accountSecurityLink = {
+    label: 'Account Security',
+    path: '/account-security',
+    icon: ShieldCheck,
+  };
+
   const patientLinks = [
     ...commonLinks,
     { label: 'My Health Record', path: '/records', icon: FileHeart },
+    accountSecurityLink,
     {
       label: 'Patient Dashboard',
       path: '/dashboard',
@@ -256,6 +264,7 @@ export default function Layout({ children }) {
 
   const doctorLinks = [
     ...commonLinks,
+    accountSecurityLink,
     {
       label: 'Doctor Dashboard',
       path: '/doctor-dashboard',
@@ -265,6 +274,7 @@ export default function Layout({ children }) {
 
   const adminLinks = [
     ...commonLinks,
+    accountSecurityLink,
     {
       label: 'Admin Dashboard',
       path: '/admin-dashboard',
@@ -959,7 +969,7 @@ export default function Layout({ children }) {
           </p>
 
           <span>
-            © {new Date().getFullYear()} Nepal Virtual Care.
+            Ã‚Â© {new Date().getFullYear()} Nepal Virtual Care.
             Demo prototype.
           </span>
         </div>

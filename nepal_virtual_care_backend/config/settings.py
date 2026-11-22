@@ -4,6 +4,7 @@ from datetime import timedelta
 
 from decouple import config, Csv
 from django.core.exceptions import ImproperlyConfigured
+from corsheaders.defaults import default_headers
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -18,7 +19,7 @@ SECRET_KEY = config(
     default="unsafe-development-key-change-me",
 )
 
-DEBUG = config("DEBUG", default=True, cast=bool)
+DEBUG = config("DEBUG", default=True)
 
 if not DEBUG and SECRET_KEY == "unsafe-development-key-change-me":
     raise ImproperlyConfigured(
@@ -182,6 +183,11 @@ CORS_ALLOWED_ORIGINS = config(
     cast=Csv(),
 )
 
+CORS_ALLOW_HEADERS = [
+    *default_headers,
+    "x-device-id",
+]
+
 CSRF_TRUSTED_ORIGINS = config(
     "CSRF_TRUSTED_ORIGINS",
     default="",
@@ -195,7 +201,7 @@ CSRF_TRUSTED_ORIGINS = config(
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "accounts.authentication.SessionJWTAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": (
         "rest_framework.permissions.IsAuthenticatedOrReadOnly",
@@ -300,6 +306,8 @@ SECURE_HSTS_PRELOAD = config(
     default=False,
     cast=bool,
 )
+
+
 # =========================================
 # VIDEOSDK VIDEO CONSULTATIONS
 # =========================================

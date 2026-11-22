@@ -29,7 +29,6 @@ nepal_virtual_care_backend/cleanup_test_data.py
 
 # Local database and backup files
 *.sqlite3
-*.backup
 *.dump
 *.bak
 
@@ -41,3 +40,11 @@ nepal_virtual_care_backend/cleanup_test_data.py
 .idea/
 .DS_Store
 Thumbs.db
+
+
+# GeoIP database (download separately)
+nepal_virtual_care_backend/geoip/
+*.mmdb
+
+# Backup files
+*.backup

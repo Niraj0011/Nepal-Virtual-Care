@@ -1,0 +1,596 @@
+
+.account-security-page {
+  min-height: 75vh;
+  padding: 40px 24px 64px;
+}
+
+.account-security-container {
+  width: 100%;
+  max-width: 1050px;
+  margin: 0 auto;
+}
+
+.account-security-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 0;
+  margin-bottom: 24px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary, #64748b);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.account-security-back:hover {
+  color: var(--primary, #2563eb);
+}
+
+.account-security-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 28px;
+}
+
+.account-security-heading {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.account-security-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 58px;
+  height: 58px;
+  border-radius: 17px;
+  background: rgba(37, 99, 235, 0.10);
+  color: #2563eb;
+}
+
+.account-security-heading h1 {
+  margin: 0 0 7px;
+  color: var(--text-primary, #172033);
+  font-family: inherit;
+  font-size: clamp(25px, 3vw, 32px);
+  font-weight: 800;
+  letter-spacing: -0.8px;
+}
+
+.account-security-heading p {
+  max-width: 620px;
+  margin: 0;
+  color: var(--text-secondary, #64748b);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.account-security-refresh,
+.account-security-retry {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 42px;
+  padding: 10px 16px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 11px;
+  background: var(--card-bg, #ffffff);
+  color: var(--text-primary, #334155);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.account-security-refresh:hover,
+.account-security-retry:hover {
+  border-color: #2563eb;
+  color: #2563eb;
+}
+
+.account-security-refresh:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.account-security-spinning {
+  animation: accountSecuritySpin 1s linear infinite;
+}
+
+@keyframes accountSecuritySpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.account-security-notice,
+.account-security-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  padding: 19px 21px;
+  margin-bottom: 16px;
+  border: 1px solid rgba(37, 99, 235, 0.16);
+  border-radius: 15px;
+  background: rgba(37, 99, 235, 0.045);
+  color: #2563eb;
+}
+
+.account-security-warning {
+  margin-bottom: 28px;
+  border-color: rgba(217, 119, 6, 0.2);
+  background: rgba(245, 158, 11, 0.055);
+  color: #b45309;
+}
+
+.account-security-notice > svg,
+.account-security-warning > svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.account-security-notice strong,
+.account-security-warning strong {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--text-primary, #172033);
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.account-security-notice p,
+.account-security-warning p {
+  margin: 0;
+  color: var(--text-secondary, #64748b);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.account-security-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 13px 16px;
+  margin-bottom: 20px;
+  border-radius: 11px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.account-security-message svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.account-security-error {
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.account-security-success {
+  border: 1px solid #bbf7d0;
+  background: #f0fdf4;
+  color: #15803d;
+}
+
+.account-security-sessions {
+  padding: 25px;
+  border: 1px solid var(--border-color, #e8edf4);
+  border-radius: 18px;
+  background: var(--card-bg, #ffffff);
+  box-shadow: 0 5px 22px rgba(15, 23, 42, 0.035);
+}
+
+.account-security-list-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.account-security-list-heading h2 {
+  margin: 0 0 5px;
+  color: var(--text-primary, #172033);
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.account-security-list-heading p {
+  margin: 0;
+  color: var(--text-secondary, #64748b);
+  font-size: 13px;
+}
+
+.account-security-logout-all {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 39px;
+  padding: 9px 13px;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  background: #fffafa;
+  color: #dc2626;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.account-security-logout-all:hover:not(:disabled) {
+  border-color: #dc2626;
+  background: #fef2f2;
+}
+
+.account-security-logout-all:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.account-security-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.account-session-card {
+  padding: 20px;
+  border: 1px solid var(--border-color, #e8edf4);
+  border-radius: 14px;
+  background: var(--card-bg, #ffffff);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.account-session-card:hover {
+  border-color: rgba(37, 99, 235, 0.35);
+  box-shadow: 0 5px 18px rgba(15, 23, 42, 0.045);
+}
+
+.account-session-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.account-session-main {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  min-width: 190px;
+}
+
+.account-session-device-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 47px;
+  height: 47px;
+  border-radius: 13px;
+  background: rgba(100, 116, 139, 0.09);
+  color: var(--text-secondary, #64748b);
+}
+
+.account-session-device-details h3 {
+  margin: 0 0 8px;
+  color: var(--text-primary, #172033);
+  font-size: 14px;
+  font-weight: 750;
+  overflow-wrap: anywhere;
+}
+
+.account-session-badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+}
+
+.account-session-current,
+.account-session-confirmed,
+.account-session-unconfirmed {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.account-session-current {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.account-session-current > span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #2563eb;
+}
+
+.account-session-confirmed {
+  background: #f0fdf4;
+  color: #15803d;
+}
+
+.account-session-unconfirmed {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.account-session-revoke {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 39px;
+  padding: 9px 13px;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  background: #fffafa;
+  color: #dc2626;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.account-session-revoke:hover:not(:disabled) {
+  border-color: #dc2626;
+  background: #fef2f2;
+}
+
+.account-session-revoke:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.account-session-meta {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.account-session-meta > div {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+  color: var(--text-secondary, #64748b);
+}
+
+.account-session-meta > div svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.account-session-meta span {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.account-session-meta strong {
+  color: var(--text-primary, #475569);
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.account-session-verification {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 14px;
+  margin-top: 20px;
+  border: 1px solid #fed7aa;
+  border-radius: 11px;
+  background: #fffaf5;
+}
+
+.account-session-verification-text {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  color: #c2410c;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.account-session-verification-text > svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.account-session-verification-text strong {
+  display: block;
+  margin-bottom: 2px;
+  color: #9a3412;
+}
+
+.account-session-verification-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.account-session-recognize,
+.account-session-report {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 8px 11px;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.account-session-recognize {
+  border: 1px solid #bbf7d0;
+  background: #f0fdf4;
+  color: #15803d;
+}
+
+.account-session-recognize:hover:not(:disabled) {
+  border-color: #16a34a;
+  background: #dcfce7;
+}
+
+.account-session-report {
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.account-session-report:hover:not(:disabled) {
+  border-color: #dc2626;
+  background: #fee2e2;
+}
+
+.account-session-recognize:disabled,
+.account-session-report:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.account-security-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 210px;
+  padding: 30px 20px;
+  color: var(--text-secondary, #64748b);
+  text-align: center;
+}
+
+.account-security-state > svg {
+  margin-bottom: 13px;
+  color: #94a3b8;
+}
+
+.account-security-state h3 {
+  margin: 0 0 8px;
+  color: var(--text-primary, #172033);
+  font-size: 16px;
+  font-weight: 750;
+}
+
+.account-security-state p {
+  max-width: 380px;
+  margin: 0 0 14px;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+@media (max-width: 900px) {
+  .account-session-meta {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .account-security-page {
+    padding: 28px 16px 45px;
+  }
+
+  .account-security-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .account-security-refresh {
+    align-self: flex-end;
+  }
+
+  .account-security-sessions {
+    padding: 19px 15px;
+  }
+
+  .account-session-card {
+    padding: 16px;
+  }
+
+  .account-session-top {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .account-session-revoke {
+    align-self: flex-start;
+  }
+
+  .account-session-verification {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 420px) {
+  .account-security-heading {
+    align-items: flex-start;
+    gap: 11px;
+  }
+
+  .account-security-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 13px;
+  }
+
+  .account-security-heading h1 {
+    font-size: 23px;
+  }
+
+  .account-session-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .account-security-list-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .account-security-logout-all {
+    align-self: stretch;
+  }
+
+  .account-session-verification-actions {
+    flex-direction: column;
+  }
+
+  .account-session-recognize,
+  .account-session-report {
+    width: 100%;
+  }
+}

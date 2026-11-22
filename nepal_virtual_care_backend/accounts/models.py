@@ -1,4 +1,6 @@
 
+import uuid
+
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
@@ -111,6 +113,126 @@ class TrustedDevice(models.Model):
 
     @property
     def is_valid(self):
+        return (
+            self.revoked_at is None
+            and self.expires_at > timezone.now()
+            and self.user.is_active
+        )
+
+
+class AccountSession(models.Model):
+    """
+    Represents one authenticated login session.
+
+    A session is separate from a TrustedDevice:
+    - AccountSession tracks an authenticated login.
+    - TrustedDevice controls whether email OTP can be skipped.
+    """
+
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+    )
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="account_sessions",
+    )
+
+    # SHA-256 hash of the persistent browser identifier.
+    # The original identifier is never stored here.
+    device_id_hash = models.CharField(max_length=64)
+
+    device_label = models.CharField(
+        max_length=255,
+        blank=True,
+        default="Unknown device",
+    )
+
+    browser_name = models.CharField(
+        max_length=100,
+        blank=True,
+        default="Unknown browser",
+    )
+
+    operating_system = models.CharField(
+        max_length=100,
+        blank=True,
+        default="Unknown operating system",
+    )
+
+    device_type = models.CharField(
+        max_length=40,
+        blank=True,
+        default="Unknown device",
+    )
+
+    ip_address = models.GenericIPAddressField(
+        null=True,
+        blank=True,
+    )
+
+    location_label = models.CharField(
+        max_length=150,
+        blank=True,
+        default="Unavailable",
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    last_activity_at = models.DateTimeField(
+        default=timezone.now,
+    )
+
+    expires_at = models.DateTimeField()
+
+    revoked_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    revoked_reason = models.CharField(
+        max_length=40,
+        blank=True,
+        default="",
+    )
+
+    # None means the user has not answered "Was this you?"
+    login_confirmed = models.BooleanField(
+        null=True,
+        blank=True,
+        default=None,
+    )
+
+    # Set when the user reports an unfamiliar login.
+    security_reported_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    class Meta:
+        ordering = ["-last_activity_at"]
+        indexes = [
+            models.Index(
+                fields=["user", "revoked_at", "expires_at"],
+                name="acct_sess_active_idx",
+            ),
+            models.Index(
+                fields=["user", "device_id_hash"],
+                name="acct_sess_device_idx",
+            ),
+        ]
+
+    def __str__(self):
+        return (
+            f"Session for {self.user.email} "
+            f"({self.device_label or 'Unknown device'})"
+        )
+
+    @property
+    def is_active(self):
         return (
             self.revoked_at is None
             and self.expires_at > timezone.now()

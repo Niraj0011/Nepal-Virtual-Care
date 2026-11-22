@@ -24,6 +24,10 @@ from rest_framework.throttling import ScopedRateThrottle
 
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.token_blacklist.models import (
+    BlacklistedToken,
+    OutstandingToken,
+)
 
 from care.models import DoctorProfile
 
@@ -36,16 +40,53 @@ from .models import (
     EmailVerification,
     EmailOTPChallenge,
     TrustedDevice,
+    AccountSession,
 )
 from .serializers import (
     RegisterSerializer,
     UserSerializer,
     ConsentSerializer,
 )
+from .session_security import create_session_tokens
 
 
 User = get_user_model()
 password_reset_token_generator = PasswordResetTokenGenerator()
+
+
+def blacklist_user_refresh_tokens(user):
+    """
+    Blacklist every outstanding refresh token belonging to a user.
+
+    Access tokens are also invalidated by AccountSession revocation
+    through SessionJWTAuthentication.
+    """
+    outstanding_tokens = OutstandingToken.objects.filter(user=user)
+
+    for outstanding_token in outstanding_tokens:
+        BlacklistedToken.objects.get_or_create(
+            token=outstanding_token,
+        )
+
+
+def blacklist_session_refresh_tokens(user, session_id):
+    """
+    Blacklist outstanding refresh tokens belonging to one session.
+    """
+    outstanding_tokens = OutstandingToken.objects.filter(user=user)
+
+    for outstanding_token in outstanding_tokens:
+        try:
+            refresh_token = RefreshToken(outstanding_token.token)
+            token_session_id = refresh_token.get("sid")
+
+            if str(token_session_id) == str(session_id):
+                BlacklistedToken.objects.get_or_create(
+                    token=outstanding_token,
+                )
+
+        except (TokenError, ValueError, TypeError):
+            continue
 
 
 class RegisterView(generics.CreateAPIView):
@@ -105,7 +146,10 @@ class VerifyEmailView(APIView):
 
         return Response(
             {
-                "detail": "Your email address has been verified. You can now sign in."
+                "detail": (
+                    "Your email address has been verified. "
+                    "You can now sign in."
+                )
             },
             status=status.HTTP_200_OK,
         )
@@ -197,19 +241,29 @@ class EmailOTPVerifyView(APIView):
             )
 
             if challenge is None:
-                error_message = "This login challenge is invalid. Please sign in again."
+                error_message = (
+                    "This login challenge is invalid. Please sign in again."
+                )
 
             elif challenge.consumed_at is not None:
-                error_message = "This verification code has already been used."
+                error_message = (
+                    "This verification code has already been used."
+                )
 
             elif challenge.expires_at <= timezone.now():
-                error_message = "This verification code has expired. Please sign in again."
+                error_message = (
+                    "This verification code has expired. Please sign in again."
+                )
 
             elif challenge.attempts >= max_attempts:
-                error_message = "Too many incorrect attempts. Please sign in again."
+                error_message = (
+                    "Too many incorrect attempts. Please sign in again."
+                )
 
             elif not challenge.user.is_active:
-                error_message = "This account is inactive. Please contact support."
+                error_message = (
+                    "This account is inactive. Please contact support."
+                )
 
             else:
                 doctor_profile = DoctorProfile.objects.filter(
@@ -227,7 +281,9 @@ class EmailOTPVerifyView(APIView):
                 )
 
                 if not is_admin and not is_active_doctor:
-                    error_message = "This account is not eligible for OTP login."
+                    error_message = (
+                        "This account is not eligible for OTP login."
+                    )
 
                 elif not hmac.compare_digest(
                     challenge.code_hash,
@@ -251,12 +307,12 @@ class EmailOTPVerifyView(APIView):
                     challenge.consumed_at = timezone.now()
                     challenge.save(update_fields=["consumed_at"])
 
-                    refresh = RefreshToken.for_user(challenge.user)
-
-                    tokens = {
-                        "refresh": str(refresh),
-                        "access": str(refresh.access_token),
-                    }
+                    # Successful OTP verification creates a new
+                    # account session and session-linked JWT tokens.
+                    tokens = create_session_tokens(
+                        challenge.user,
+                        request,
+                    )
 
                     # Create a trusted device only when the user
                     # explicitly chooses to remember this browser.
@@ -326,7 +382,11 @@ class TrustedDeviceRevokeView(APIView):
 
         if device is None:
             return Response(
-                {"detail": "Trusted device not found or already revoked."},
+                {
+                    "detail": (
+                        "Trusted device not found or already revoked."
+                    )
+                },
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -409,7 +469,9 @@ class PasswordResetConfirmView(APIView):
             for value in [uid, token, password, password_confirm]
         ):
             raise ValidationError({
-                "detail": "Please provide the reset link and both password fields."
+                "detail": (
+                    "Please provide the reset link and both password fields."
+                )
             })
 
         if password != password_confirm:
@@ -429,12 +491,16 @@ class PasswordResetConfirmView(APIView):
             User.DoesNotExist,
         ):
             raise ValidationError({
-                "token": "This password reset link is invalid or has expired."
+                "token": (
+                    "This password reset link is invalid or has expired."
+                )
             })
 
         if not password_reset_token_generator.check_token(user, token):
             raise ValidationError({
-                "token": "This password reset link is invalid or has expired."
+                "token": (
+                    "This password reset link is invalid or has expired."
+                )
             })
 
         try:
@@ -448,15 +514,31 @@ class PasswordResetConfirmView(APIView):
             user.set_password(password)
             user.save(update_fields=["password"])
 
+            now = timezone.now()
+
             # Password reset revokes all previously trusted devices.
             TrustedDevice.objects.filter(
                 user=user,
                 revoked_at__isnull=True,
-            ).update(revoked_at=timezone.now())
+            ).update(revoked_at=now)
+
+            # Password reset also invalidates every active login session.
+            AccountSession.objects.filter(
+                user=user,
+                revoked_at__isnull=True,
+            ).update(
+                revoked_at=now,
+                revoked_reason="password_reset",
+            )
+
+            blacklist_user_refresh_tokens(user)
 
         return Response(
             {
-                "detail": "Your password has been changed successfully. You can now sign in."
+                "detail": (
+                    "Your password has been changed successfully. "
+                    "You can now sign in."
+                )
             },
             status=status.HTTP_200_OK,
         )
@@ -522,17 +604,277 @@ class LogoutView(APIView):
 
             if str(token_user_id) != str(request.user.pk):
                 raise ValidationError({
-                    "refresh": "This refresh token does not belong to your account."
+                    "refresh": (
+                        "This refresh token does not belong to your account."
+                    )
                 })
 
             token.blacklist()
 
+            # Revoke the session associated with this refresh token.
+            session_id = token.get("sid")
+
+            if session_id:
+                AccountSession.objects.filter(
+                    id=session_id,
+                    user=request.user,
+                    revoked_at__isnull=True,
+                ).update(
+                    revoked_at=timezone.now(),
+                    revoked_reason="logout",
+                )
+
         except TokenError:
             raise ValidationError({
-                "refresh": "The refresh token is invalid or has already been revoked."
+                "refresh": (
+                    "The refresh token is invalid or has already been revoked."
+                )
             })
 
         return Response(
             {"detail": "Successfully logged out."},
+            status=status.HTTP_200_OK,
+        )
+
+
+# =========================================
+# ACCOUNT SESSION SECURITY
+# =========================================
+
+class AccountSessionListView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        now = timezone.now()
+
+        sessions = AccountSession.objects.filter(
+            user=request.user,
+            revoked_at__isnull=True,
+            expires_at__gt=now,
+            user__is_active=True,
+        ).order_by("-last_activity_at")
+
+        current_session_id = None
+
+        if request.auth:
+            current_session_id = request.auth.get("sid")
+
+        results = [
+            {
+                "id": str(account_session.id),
+                "device_label": account_session.device_label,
+                "browser_name": account_session.browser_name,
+                "operating_system": account_session.operating_system,
+                "device_type": account_session.device_type,
+                "location_label": (
+                    account_session.location_label or "Unavailable"
+                ),
+                "created_at": account_session.created_at,
+                "last_activity_at": account_session.last_activity_at,
+                "expires_at": account_session.expires_at,
+                "is_current": (
+                    str(account_session.id) == str(current_session_id)
+                ),
+                "login_confirmed": account_session.login_confirmed,
+            }
+            for account_session in sessions
+        ]
+
+        return Response(results, status=status.HTTP_200_OK)
+
+
+class AccountSessionRevokeView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def delete(self, request, session_id):
+        now = timezone.now()
+
+        with transaction.atomic():
+            account_session = (
+                AccountSession.objects
+                .select_for_update()
+                .filter(
+                    id=session_id,
+                    user=request.user,
+                    revoked_at__isnull=True,
+                    expires_at__gt=now,
+                )
+                .first()
+            )
+
+            if account_session is None:
+                return Response(
+                    {
+                        "detail": (
+                            "Session not found, expired, or already revoked."
+                        )
+                    },
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+            account_session.revoked_at = now
+            account_session.revoked_reason = "user_revoked"
+            account_session.save(
+                update_fields=["revoked_at", "revoked_reason"]
+            )
+
+            blacklist_session_refresh_tokens(
+                request.user,
+                account_session.id,
+            )
+
+        return Response(
+            {"detail": "The selected session has been revoked."},
+            status=status.HTTP_200_OK,
+        )
+
+
+class LogoutAllSessionsView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        now = timezone.now()
+
+        with transaction.atomic():
+            AccountSession.objects.filter(
+                user=request.user,
+                revoked_at__isnull=True,
+            ).update(
+                revoked_at=now,
+                revoked_reason="logout_all",
+            )
+
+            blacklist_user_refresh_tokens(request.user)
+
+        return Response(
+            {
+                "detail": (
+                    "All account sessions have been logged out. "
+                    "Please sign in again."
+                )
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class AccountSessionRecognizeView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, session_id):
+        now = timezone.now()
+
+        account_session = AccountSession.objects.filter(
+            id=session_id,
+            user=request.user,
+            revoked_at__isnull=True,
+            expires_at__gt=now,
+        ).first()
+
+        if account_session is None:
+            return Response(
+                {
+                    "detail": (
+                        "This session was not found or is no longer active."
+                    )
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        if account_session.login_confirmed is False:
+            return Response(
+                {
+                    "detail": (
+                        "This login was already reported as unfamiliar. "
+                        "Please reset your password before signing in again."
+                    ),
+                    "password_reset_required": True,
+                },
+                status=status.HTTP_409_CONFLICT,
+            )
+
+        account_session.login_confirmed = True
+        account_session.save(update_fields=["login_confirmed"])
+
+        return Response(
+            {
+                "detail": "Thank you for confirming this login.",
+                "login_confirmed": True,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class AccountSessionReportView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, session_id):
+        now = timezone.now()
+
+        with transaction.atomic():
+            account_session = (
+                AccountSession.objects
+                .select_for_update()
+                .filter(
+                    id=session_id,
+                    user=request.user,
+                    revoked_at__isnull=True,
+                    expires_at__gt=now,
+                )
+                .first()
+            )
+
+            if account_session is None:
+                return Response(
+                    {
+                        "detail": (
+                            "This session was not found or is no longer active."
+                        )
+                    },
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+            account_session.login_confirmed = False
+            account_session.security_reported_at = now
+            account_session.revoked_at = now
+            account_session.revoked_reason = "unrecognized_login"
+            account_session.save(
+                update_fields=[
+                    "login_confirmed",
+                    "security_reported_at",
+                    "revoked_at",
+                    "revoked_reason",
+                ]
+            )
+
+            # Treat an unfamiliar login as a possible account compromise.
+            # End every other active login as a precaution.
+            AccountSession.objects.filter(
+                user=request.user,
+                revoked_at__isnull=True,
+            ).update(
+                revoked_at=now,
+                revoked_reason="security_report",
+            )
+
+            # Remove OTP exemptions so every browser must verify again.
+            TrustedDevice.objects.filter(
+                user=request.user,
+                revoked_at__isnull=True,
+            ).update(revoked_at=now)
+
+            # Invalidate every outstanding refresh token.
+            blacklist_user_refresh_tokens(request.user)
+
+        return Response(
+            {
+                "detail": (
+                    "The unfamiliar login has been reported. "
+                    "All active sessions and trusted devices have been "
+                    "revoked. Reset your password before signing in again."
+                ),
+                "password_reset_required": True,
+                "logout_all_completed": True,
+                "trusted_devices_revoked": True,
+            },
             status=status.HTTP_200_OK,
         )

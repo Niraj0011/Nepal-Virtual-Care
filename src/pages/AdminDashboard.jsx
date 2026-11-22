@@ -1498,42 +1498,32 @@ const GroupIcon = item.icon;
         </header>
 
         <div className="dashboard-content">
-          <section className="dashboard-welcome">
-            <div className="dashboard-welcome-text">
-              <span className="dashboard-eyebrow">
-                PLATFORM ADMINISTRATION PORTAL
-              </span>
+          <section className="admin-welcome-section">
+  <div className="admin-welcome-content">
+    <span className="admin-welcome-eyebrow">
+      ADMIN WORKSPACE
+    </span>
 
-              <h1>Welcome back, {firstName}!</h1>
+    <h2>Welcome back, {firstName}!</h2>
 
-              <p>
-                Manage healthcare providers, doctor accounts, patient
-                accounts and appointments across Nepal Virtual Care.
-              </p>
+    <p>
+      Manage healthcare providers, doctor accounts, patient
+      accounts and appointments across Nepal Virtual Care.
+    </p>
+  </div>
 
-              <a
-                href="#doctor-management"
-                onClick={() => {
-                  setActiveNavigation('Doctor Management');
-                }}
-                className="dashboard-primary-button"
-              >
-                <UserPlus size={17} />
-                Manage doctors
-              </a>
-            </div>
-
-            <div className="dashboard-welcome-art">
-              <div className="dashboard-art-circle">
-                <ShieldCheck size={65} strokeWidth={1.5} />
-              </div>
-
-              <span className="dashboard-art-badge">
-                <CheckCircle2 size={17} />
-                Platform administration
-              </span>
-            </div>
-          </section>
+  <div className="admin-welcome-date">
+    <CalendarDays size={19} />
+    <span>
+      {new Date().toLocaleDateString(undefined, {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })}
+    </span>
+  </div>
+</section>
 
           {/* Statistics */}
           <section className="dashboard-stats admin-dashboard-stats">

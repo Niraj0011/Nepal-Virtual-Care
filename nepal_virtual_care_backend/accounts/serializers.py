@@ -11,8 +11,14 @@ from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from care.models import DoctorProfile
-from .models import PatientProfile, ConsentPreference, TrustedDevice
+
+from .models import (
+    PatientProfile,
+    ConsentPreference,
+    TrustedDevice,
+)
 from .email_utils import create_email_otp
+from .session_security import create_session_tokens
 
 
 User = get_user_model()
@@ -146,12 +152,14 @@ class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
                     trusted_device.last_used_at = timezone.now()
                     trusted_device.save(update_fields=["last_used_at"])
 
-                    refresh = self.get_token(user)
+                    request = self.context.get("request")
 
-                    return {
-                        "refresh": str(refresh),
-                        "access": str(refresh.access_token),
-                    }
+                    if request is None:
+                        raise AuthenticationFailed(
+                            "Unable to establish a secure login session."
+                        )
+
+                    return create_session_tokens(user, request)
 
             # No valid trusted device: send an OTP.
             challenge = create_email_otp(user)
@@ -166,13 +174,15 @@ class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
                 ),
             }
 
-        # Patients continue using the normal password-only login.
-        refresh = self.get_token(user)
+        # Patients continue using password-only login.
+        request = self.context.get("request")
 
-        return {
-            "refresh": str(refresh),
-            "access": str(refresh.access_token),
-        }
+        if request is None:
+            raise AuthenticationFailed(
+                "Unable to establish a secure login session."
+            )
+
+        return create_session_tokens(user, request)
 
 
 class UserSerializer(serializers.ModelSerializer):

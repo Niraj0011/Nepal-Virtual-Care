@@ -1,17 +1,21 @@
 
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import {
   HeartPulse,
   ShieldCheck,
   Mail,
   ArrowLeft,
   CheckCircle2,
+  AlertTriangle,
 } from 'lucide-react';
 
 import { requestPasswordReset } from '../api';
 
 export default function ForgotPassword() {
+  const location = useLocation();
+  const securityMessage = location.state?.securityMessage;
+
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -48,6 +52,22 @@ export default function ForgotPassword() {
 
         {!submitted ? (
           <>
+            {securityMessage && (
+              <div
+                className="forgot-password-security-alert"
+                role="alert"
+              >
+                <AlertTriangle size={22} />
+                <div>
+                  <strong>Security alert</strong>
+                  <p>{securityMessage}</p>
+                  <p>
+                    Please reset your password before signing in again.
+                  </p>
+                </div>
+              </div>
+            )}
+
             <div className="forgot-password-icon">
               <Mail size={30} />
             </div>
@@ -134,6 +154,42 @@ export default function ForgotPassword() {
 
       <style>
         {`
+          .forgot-password-security-alert {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 16px;
+            margin: 22px 0;
+            border: 1px solid #f0c879;
+            border-radius: 12px;
+            background: #fff8e9;
+            color: #704b12;
+            text-align: left;
+          }
+
+          .forgot-password-security-alert > svg {
+            flex-shrink: 0;
+            margin-top: 2px;
+            color: #b7791f;
+          }
+
+          .forgot-password-security-alert strong {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 14px;
+          }
+
+          .forgot-password-security-alert p {
+            margin: 0;
+            font-size: 13px;
+            line-height: 1.7;
+          }
+
+          .forgot-password-security-alert p + p {
+            margin-top: 6px;
+            font-weight: 600;
+          }
+
           .forgot-password-icon,
           .forgot-password-success-icon {
             display: flex;

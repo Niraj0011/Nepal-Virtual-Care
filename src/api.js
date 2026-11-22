@@ -5,9 +5,30 @@ let refreshPromise = null;
 
 const TRUSTED_DEVICE_KEY_PREFIX = 'nvc-trusted-device-';
 const PENDING_LOGIN_EMAIL_KEY = 'nvc-pending-login-email';
+const BROWSER_DEVICE_ID_KEY = 'nvc-browser-device-id';
 
 function getTrustedDeviceKey(email) {
   return `${TRUSTED_DEVICE_KEY_PREFIX}${email.trim().toLowerCase()}`;
+}
+
+// Persistent browser identifier used for account-session tracking.
+// This is separate from the trusted-device OTP exemption token.
+function getOrCreateBrowserDeviceId() {
+  let deviceId = localStorage.getItem(BROWSER_DEVICE_ID_KEY);
+
+  if (deviceId) {
+    return deviceId;
+  }
+
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    deviceId = crypto.randomUUID();
+  } else {
+    deviceId = `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
+  }
+
+  localStorage.setItem(BROWSER_DEVICE_ID_KEY, deviceId);
+
+  return deviceId;
 }
 
 function clearAuth(dispatchEvent = true) {
@@ -309,6 +330,10 @@ export async function removeDoctorProfilePhoto() {
   });
 }
 
+// =========================================
+// LOGIN AND OTP VERIFICATION
+// =========================================
+
 export async function loginPatient(email, password) {
   clearAuth(false);
 
@@ -321,6 +346,9 @@ export async function loginPatient(email, password) {
   try {
     const data = await request('/auth/token/', {
       method: 'POST',
+      headers: {
+        'X-Device-ID': getOrCreateBrowserDeviceId(),
+      },
       body: JSON.stringify({
         email: normalizedEmail,
         password,
@@ -367,6 +395,9 @@ export async function verifyLoginOTP(
 
   const data = await request('/auth/verify-otp/', {
     method: 'POST',
+    headers: {
+      'X-Device-ID': getOrCreateBrowserDeviceId(),
+    },
     body: JSON.stringify({
       challenge,
       code: code.trim(),
@@ -387,6 +418,10 @@ export async function verifyLoginOTP(
   return profile;
 }
 
+// =========================================
+// TRUSTED DEVICES
+// =========================================
+
 export async function getTrustedDevices() {
   return request('/auth/trusted-devices/');
 }
@@ -396,6 +431,72 @@ export async function revokeTrustedDevice(deviceId) {
     method: 'DELETE',
   });
 }
+
+// =========================================
+// ACCOUNT SESSION SECURITY
+// =========================================
+
+export async function getAccountSessions() {
+  return request('/auth/sessions/');
+}
+
+export async function revokeAccountSession(sessionId) {
+  if (!sessionId) {
+    throw new Error('A session ID is required.');
+  }
+
+  return request(`/auth/sessions/${encodeURIComponent(sessionId)}/`, {
+    method: 'DELETE',
+  });
+}
+
+export async function recognizeAccountSession(sessionId) {
+  if (!sessionId) {
+    throw new Error('A session ID is required.');
+  }
+
+  return request(
+    `/auth/sessions/${encodeURIComponent(sessionId)}/recognize/`,
+    {
+      method: 'POST',
+    }
+  );
+}
+
+export async function reportUnrecognizedLogin(sessionId) {
+  if (!sessionId) {
+    throw new Error('A session ID is required.');
+  }
+
+  const result = await request(
+    `/auth/sessions/${encodeURIComponent(sessionId)}/report/`,
+    {
+      method: 'POST',
+    }
+  );
+
+  // Reporting an unrecognized login revokes all account sessions.
+  // Clear local credentials so the user must sign in again after
+  // securing the account and resetting their password.
+  clearAuth();
+
+  return result;
+}
+
+export async function logoutAllDevices() {
+  const result = await request('/auth/sessions/logout-all/', {
+    method: 'POST',
+  });
+
+  // The backend also revokes the session making this request.
+  clearAuth();
+
+  return result;
+}
+
+// =========================================
+// LOGOUT
+// =========================================
 
 export async function logoutPatient() {
   const refresh = localStorage.getItem('nvc-refresh');

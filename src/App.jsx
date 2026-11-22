@@ -21,6 +21,7 @@ import VerifyEmail from './pages/VerifyEmail';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import TrustedDevices from './pages/TrustedDevices';
+import AccountSecurity from './pages/AccountSecurity';
 import VideoConsultation from './pages/VideoConsultation';
 
 function getDashboardPath(role) {
@@ -151,6 +152,15 @@ function AppRoutes() {
           element={
             <ProtectedRoute allowedRoles={['doctor', 'admin']}>
               <TrustedDevices />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/account-security"
+          element={
+            <ProtectedRoute allowedRoles={['patient', 'doctor', 'admin']}>
+              <AccountSecurity />
             </ProtectedRoute>
           }
         />
