@@ -969,8 +969,8 @@ export default function Layout({ children }) {
           </p>
 
           <span>
-            Ã‚Â© {new Date().getFullYear()} Nepal Virtual Care.
-            Demo prototype.
+            © {new Date().getFullYear()} Nepal Virtual Care.
+            All rights reserved.
           </span>
         </div>
       </footer>

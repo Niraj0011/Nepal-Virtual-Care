@@ -20,10 +20,10 @@ npm run preview
 
 ## Pages
 - `/` Home
-- `/virtual-care` provider directory, search, specialty filter and demo consultation request
+- `/virtual-care` provider directory, search, specialty filter and  consultation request
 - `/health-information` educational resource cards
 - `/community` sample discussions and local post creation
-- `/register` and `/login` demo authentication
+- `/register` and `/login`  authentication
 - `/records` patient overview, profile, documents, consultation requests and consent
 
 ## Project structure
