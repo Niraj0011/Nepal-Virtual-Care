@@ -446,6 +446,14 @@ export default function Dashboard() {
       color: 'purple',
       label: 'YOUR PRIVACY',
     },
+    {
+      title: 'Account security',
+      description: 'Review active sessions and secure your account.',
+      icon: ShieldCheck,
+      path: '/account-security',
+      color: 'purple',
+      label: 'ACCOUNT SECURITY',
+    },
   ];
 
   const getStatusClass = (status) => {
@@ -905,10 +913,10 @@ export default function Dashboard() {
                           <span>
                             {appointment.preferred_date || 'Date not specified'}
                             {appointment.start_time
-                              ? ` · ${formatTime(appointment.start_time)}`
+                              ? ` Â· ${formatTime(appointment.start_time)}`
                               : ''}
                             {appointment.end_time
-                              ? ` – ${formatTime(appointment.end_time)}`
+                              ? ` â€“ ${formatTime(appointment.end_time)}`
                               : ''}
                           </span>
 
@@ -1279,7 +1287,7 @@ export default function Dashboard() {
                 >
                   {selectedAppointment.preferred_date}
                   {selectedAppointment.start_time
-                    ? ` · ${formatTime(selectedAppointment.start_time)}`
+                    ? ` Â· ${formatTime(selectedAppointment.start_time)}`
                     : ''}
                 </p>
               </div>
@@ -1399,7 +1407,7 @@ export default function Dashboard() {
                       >
                         {isSelected && <CheckCircle2 size={14} />}
                         {formatTime(start)}
-                        {end ? ` – ${formatTime(end)}` : ''}
+                        {end ? ` â€“ ${formatTime(end)}` : ''}
                       </button>
                     );
                   })}

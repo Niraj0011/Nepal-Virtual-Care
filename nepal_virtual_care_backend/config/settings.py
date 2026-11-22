@@ -1,35 +1,75 @@
 
+import os
 from pathlib import Path
 from datetime import timedelta
 
-from decouple import config, Csv
+from dotenv import load_dotenv
 from django.core.exceptions import ImproperlyConfigured
 from corsheaders.defaults import default_headers
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Load environment variables from the backend .env file.
+load_dotenv(BASE_DIR / ".env")
+
+
+# =========================================
+# ENVIRONMENT VARIABLE HELPERS
+# =========================================
+
+def env_bool(name, default=False):
+    value = os.getenv(name)
+
+    if value is None:
+        return default
+
+    value = value.strip().lower()
+
+    if value in ("true", "1", "yes", "on"):
+        return True
+
+    if value in ("false", "0", "no", "off"):
+        return False
+
+    raise ImproperlyConfigured(
+        f"{name} must be a valid boolean value."
+    )
+
+
+def env_int(name, default):
+    value = os.getenv(name, str(default))
+
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        raise ImproperlyConfigured(
+            f"{name} must be a valid integer."
+        )
+
+
+def env_csv(name, default=""):
+    value = os.getenv(name, default)
+
+    return [
+        item.strip()
+        for item in value.split(",")
+        if item.strip()
+    ]
+
 
 # =========================================
 # SECURITY
 # =========================================
 
-SECRET_KEY = config(
-    "SECRET_KEY",
-    default="unsafe-development-key-change-me",
+SECRET_KEY = os.getenv(
+    "SECRET_KEY"
 )
 
-DEBUG = config("DEBUG", default=True)
+DEBUG = env_bool("DEBUG", True)
 
-if not DEBUG and SECRET_KEY == "unsafe-development-key-change-me":
-    raise ImproperlyConfigured(
-        "Set a secure SECRET_KEY in your environment before production."
-    )
-
-ALLOWED_HOSTS = config(
-    "ALLOWED_HOSTS",
-    default="127.0.0.1,localhost",
-    cast=Csv(),
+ALLOWED_HOSTS = env_csv(
+    "ALLOWED_HOSTS"
 )
 
 
@@ -105,11 +145,11 @@ ASGI_APPLICATION = "config.asgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": config("DB_NAME", default="nepal_virtual_care"),
-        "USER": config("DB_USER", default="postgres"),
-        "PASSWORD": config("DB_PASSWORD", default=""),
-        "HOST": config("DB_HOST", default="127.0.0.1"),
-        "PORT": config("DB_PORT", default="5432"),
+        "NAME": os.getenv("DB_NAME"),
+        "USER": os.getenv("DB_USER"),
+        "PASSWORD": os.getenv("DB_PASSWORD"),
+        "HOST": os.getenv("DB_HOST"),
+        "PORT": os.getenv("DB_PORT"),
     }
 }
 
@@ -177,21 +217,18 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # CORS AND CSRF
 # =========================================
 
-CORS_ALLOWED_ORIGINS = config(
-    "FRONTEND_ORIGIN",
-    default="http://localhost:5173,http://127.0.0.1:5173",
-    cast=Csv(),
+CORS_ALLOWED_ORIGINS = env_csv(
+    "FRONTEND_ORIGIN"
+    
 )
 
 CORS_ALLOW_HEADERS = [
     *default_headers,
-    "x-device-id",
+     "x-device-id",
 ]
 
-CSRF_TRUSTED_ORIGINS = config(
+CSRF_TRUSTED_ORIGINS = env_csv(
     "CSRF_TRUSTED_ORIGINS",
-    default="",
-    cast=Csv(),
 )
 
 
@@ -234,39 +271,34 @@ SIMPLE_JWT = {
 # EMAIL CONFIGURATION
 # =========================================
 
-EMAIL_BACKEND = config(
+EMAIL_BACKEND = os.getenv(
     "EMAIL_BACKEND",
-    default="django.core.mail.backends.console.EmailBackend",
+    "django.core.mail.backends.console.EmailBackend",
 )
 
-EMAIL_HOST = config("EMAIL_HOST", default="smtp.gmail.com")
+EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
 
-EMAIL_PORT = config("EMAIL_PORT", default=587, cast=int)
+EMAIL_PORT = env_int("EMAIL_PORT", 587)
 
-EMAIL_USE_TLS = config(
-    "EMAIL_USE_TLS",
-    default=True,
-    cast=bool,
-)
+EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", True)
 
-EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
 
-EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
 
-DEFAULT_FROM_EMAIL = config(
+DEFAULT_FROM_EMAIL = os.getenv(
     "DEFAULT_FROM_EMAIL",
-    default="Nepal Virtual Care <noreply@nepalvirtualcare.local>",
+    "Nepal Virtual Care <noreply@nepalvirtualcare.local>",
 )
 
-FRONTEND_URL = config(
+FRONTEND_URL = os.getenv(
     "FRONTEND_URL",
-    default="http://localhost:5173",
+    "http://localhost:5173",
 ).rstrip("/")
 
-EMAIL_VERIFICATION_TOKEN_TTL_HOURS = config(
+EMAIL_VERIFICATION_TOKEN_TTL_HOURS = env_int(
     "EMAIL_VERIFICATION_TOKEN_TTL_HOURS",
-    default=24,
-    cast=int,
+    24,
 )
 
 
@@ -281,30 +313,27 @@ X_FRAME_OPTIONS = "DENY"
 SECURE_REFERRER_POLICY = "same-origin"
 
 SESSION_COOKIE_SECURE = not DEBUG
+
 CSRF_COOKIE_SECURE = not DEBUG
 
-SECURE_SSL_REDIRECT = config(
+SECURE_SSL_REDIRECT = env_bool(
     "SECURE_SSL_REDIRECT",
-    default=False,
-    cast=bool,
+    False,
 )
 
-SECURE_HSTS_SECONDS = config(
+SECURE_HSTS_SECONDS = env_int(
     "SECURE_HSTS_SECONDS",
-    default=0,
-    cast=int,
+    0,
 )
 
-SECURE_HSTS_INCLUDE_SUBDOMAINS = config(
+SECURE_HSTS_INCLUDE_SUBDOMAINS = env_bool(
     "SECURE_HSTS_INCLUDE_SUBDOMAINS",
-    default=False,
-    cast=bool,
+    False,
 )
 
-SECURE_HSTS_PRELOAD = config(
+SECURE_HSTS_PRELOAD = env_bool(
     "SECURE_HSTS_PRELOAD",
-    default=False,
-    cast=bool,
+    False,
 )
 
 
@@ -312,5 +341,6 @@ SECURE_HSTS_PRELOAD = config(
 # VIDEOSDK VIDEO CONSULTATIONS
 # =========================================
 
-VIDEOSDK_API_KEY = config("VIDEOSDK_API_KEY", default="")
-VIDEOSDK_SECRET = config("VIDEOSDK_SECRET", default="")
+VIDEOSDK_API_KEY = os.getenv("VIDEOSDK_API_KEY")
+
+VIDEOSDK_SECRET = os.getenv("VIDEOSDK_SECRET")

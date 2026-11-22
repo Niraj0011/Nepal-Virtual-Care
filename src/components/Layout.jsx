@@ -254,7 +254,7 @@ export default function Layout({ children }) {
   const patientLinks = [
     ...commonLinks,
     { label: 'My Health Record', path: '/records', icon: FileHeart },
-    accountSecurityLink,
+
     {
       label: 'Patient Dashboard',
       path: '/dashboard',
